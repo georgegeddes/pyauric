@@ -50,12 +50,12 @@ class AURICManager( object ):
         finally:
             return out
 
-    def write( self, fname, ftype=None, *args, **kwargs ):
+    def write( self, fname, ftype=None, **kwargs ):
         fpath = self.pathto( fname )
         if fname == "view.inp" or ftype == "view":
-            write_view( filename=fpath, *args, **kwargs )
+            write_view( filename=fpath, **kwargs )
         elif fname == "radtran.opt" or ftype == "radtrans":
-            write_radtrans_options( filename=fpath, *args, **kwargs )
+            write_radtrans_options( filename=fpath, **kwargs )
         else:
             raise Exception("pyauric doesn't know how to write that kind of file yet.")
 
@@ -141,7 +141,7 @@ def read_view(filename="view.inp"):
     za=[float(line.strip()) for line in lines[1:]]
     return h, np.asarray( za )
 
-def write_view(filename="view.inp", h, za ):
+def write_view(filename="view.inp", h=0, za=[0] ):
     with open(filename,'w') as f:
         f.write("{: 11.4f}   observer altitude (km)\n".format(h))
         for i in za:
@@ -158,7 +158,7 @@ def read_radtrans_options(filename='radtrans.opt'):
             options[m.group(1)]=m.group(2)
     return options
 
-def write_radtrans_options( filename='radtrans.opt', options ):
+def write_radtrans_options( filename='radtrans.opt', options={} ):
     """Takes a dictionary of options and a filename and writes a radtrans options file for use with AURIC."""
     keylist=['832', '833', '834', '1304', '1356', '1040', '1026', '989', '1048', '1066', '1135', '1199']
     for key in keylist:

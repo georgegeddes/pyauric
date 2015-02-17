@@ -19,6 +19,7 @@ class AURICManager( object ):
     def customrun( self, commands, timeout=10 ):
         commands = map(Command, commands)
         for cmd in commands:
+            cmd.cmd=os.path.join( self.auricroot, "bin",os.uname()[0],cmd.cmd)
             cmd.run(timeout)
         return "running {}".format(" ".join( [ c.cmd for c in commands ] ) )
 
@@ -221,6 +222,8 @@ def write_params( filename, parsed_lines ):
         if isinstance(parsed_lines[i], str):
             lines[i]=parsed_lines[i]
         elif parsed_lines[i][0] in intkeys:
+            lines[i] = "{: >12s} = {: >10.0f} : {:<s}\n".format(*parsed_lines[i])
+        elif parsed_lines[i][1] == -1:
             lines[i] = "{: >12s} = {: >10.0f} : {:<s}\n".format(*parsed_lines[i])
         else:
             lines[i] = "{: >12s} = {: >10.2f} : {:<s}\n".format(*parsed_lines[i])

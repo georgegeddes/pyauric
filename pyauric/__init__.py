@@ -13,8 +13,8 @@ class AURICManager( object ):
 
     def runbatch( self, timeout=10 ):
         """Execute batch file."""
-        self.batch_command.run( timeout )
-        return self.batch_command.process.returncode
+        ret = self.batch_command.run( timeout )
+        return ret
 
     def customrun( self, commands, timeout=10 ):
         commands = map(Command, commands)
@@ -25,9 +25,9 @@ class AURICManager( object ):
         features=['O+e 832 A (initial)','O+e 833 A (initial)','O+e 834 A (initial)',
         'O+hv 832 A (initial)','O+hv 833 A (initial)','O+hv 834 A (initial)'] ):
         """Retrieve desired features from file 'filename'."""
-        data = self.read_auric_file( self.pathto( filename ) )
+        data = read_auric_file( self.pathto( filename ) )
         out={}
-        out["ALT"] = np.asaray(data["ALT"])
+        out["ALT"] = np.asarray(data["ALT"])
         out["ZA"] = np.asarray(data["ZA"])
         for feature in features:
             out[feature] = np.asarray(data["profiles"][feature])
@@ -54,7 +54,7 @@ class AURICManager( object ):
         fpath = self.pathto( fname )
         if fname == "view.inp" or ftype == "view":
             write_view( filename=fpath, **kwargs )
-        elif fname == "radtran.opt" or ftype == "radtrans":
+        elif fname == "radtrans.opt" or ftype == "radtrans":
             write_radtrans_options( filename=fpath, **kwargs )
         else:
             raise Exception("pyauric doesn't know how to write that kind of file yet.")

@@ -63,6 +63,16 @@ class AURICManager( object ):
         """Absolute path to file 'fname' in the auric directory."""
         return os.path.abspath( os.path.join( self.path, fname ) )
 
+    def update_params( self, paramdict ):
+        """Change the values in param.inp using a dictionary."""
+        filename = self.pathto('param.inp')
+        update_params( filename, paramdict )
+        return paramdict
+
+    @property
+    def params( self ):
+        return parse_params( self.pathto( 'param.inp' ) )
+
 class Command(object):
       #http://stackoverflow.com/questions/1191374/subprocess-with-timeout?lq=1
       def __init__(self, cmd):
@@ -171,3 +181,86 @@ def write_radtrans_options( filename='radtrans.opt', options={} ):
             s=" "*9+"{:4s} = {}\n".format(key,options[key])
             f.write(s)
         f.write("-------------------------------------------------------\n")
+
+def update_params( filename, paramdict ):
+    data = parse_params( filename )
+    modify_params( data, paramdict )
+    write_params( filename, data)
+    return data
+
+def parse_params( filename ):
+    """Reads AURIC's param.inp file and returns a list containing the unformatted data one each line."""
+    with open( filename, 'r' ) as f:
+        lines=f.readlines()        
+    parsed_lines=[]
+    for i, line in enumerate(lines):
+        if re.search(":$",line): 
+            parsed_lines.append(line) 
+            continue
+        x = re.search('.*(?==)',line)                         # Everything before =
+        y = re.search('(?<==)*[0-9 -]*?\.*[0-9 ]*(?=:)',line) # Number between = and :
+        z = re.search('(?<=:).*',line)                        # Anything after :
+        key = x.group(0).strip()
+        value = float( y.group(0).strip() )
+        desc = z.group(0).strip()
+        parsed_lines.append( [ key, value, desc ] )
+    return parsed_lines
+
+def modify_params( parsed_lines, paramdict ):
+    """Takes a list of parsed lines from parse_params and makes the changes specified in paramdict."""
+    for line in parsed_lines: # Replace values to be modified
+        if line[0] in paramdict.keys():
+            line[1] = paramdict[line[0]]
+
+def write_params( filename, parsed_lines ):
+    """Writes a set of lines parsed by parse_params to *filename*."""
+    intkeys = ['NALT', 'YYDDD'] 
+    lines=[None]*32
+    for i, line in enumerate(parsed_lines):
+        if isinstance(parsed_lines[i], str):
+            lines[i]=parsed_lines[i]
+        elif parsed_lines[i][0] in intkeys:
+            lines[i] = "{: >12s} = {: >10.0f} : {:<s}\n".format(*parsed_lines[i])
+        else:
+            lines[i] = "{: >12s} = {: >10.2f} : {:<s}\n".format(*parsed_lines[i])
+    with open( filename, 'w' ) as f:
+        for line in lines:
+            f.write(line)
+
+param_format = r"""Mandatory parameters:
+        NALT =        100 : number of altitude points
+         ZUB =    1000.00 : upper bound of atmosphere (km)
+       YYDDD =      92080 : year & day (YYDDD format)
+       UTSEC =   45000.00 : universal time (sec)
+        GLAT =      42.00 : latitude (deg)
+        GLON =     289.00 : longitude (deg)
+   SCALE(N2) =       1.00 : N2 density scale factor
+   SCALE(O2) =       1.00 : O2 density scale factor
+    SCALE(O) =       1.00 : O  density scale factor
+   SCALE(O3) =       1.00 : O3 density scale factor
+   SCALE(NO) =       1.00 : NO density scale factor
+    SCALE(N) =       1.00 : N  density scale factor
+   SCALE(He) =       1.00 : He density scale factor
+    SCALE(H) =       1.00 : H  density scale factor
+   SCALE(Ar) =       1.00 : Ar density scale factor
+Derived parameters:
+       GMLAT =      51.84 : geomagnetic latitude (deg)
+       GMLON =       1.71 : geomagnetic longitude (deg)
+       DPANG =      70.16 : magnetic dip angle (deg)
+         SZA =       0.00 : solar zenith angle (deg)
+         SLT =       1.00 : solar local time (hours)
+      F10DAY =      79.30 : F10.7 (current day)
+      F10PRE =      76.80 : F10.7 (previous day)
+      F10AVE =      79.40 : F10.7 (81-day average)
+       AP(1) =       9.00 : daily Ap
+       AP(2) =      -1.00 : 3-hour Ap
+       AP(3) =      -1.00 : 3-hour Ap
+       AP(4) =      -1.00 : 3-hour Ap
+       AP(5) =      -1.00 : 3-hour Ap
+       AP(6) =      -1.00 : average 3-hour Ap
+       AP(7) =      -1.00 : average 3-hour Ap
+"""
+
+
+
+

@@ -64,7 +64,7 @@ class AURICManager( object ):
         """Absolute path to file 'fname' in the auric directory."""
         return os.path.abspath( os.path.join( self.path, fname ) )
 
-    def update_params( self, paramdict ):
+    def set_params( self, paramdict ):
         """Change the values in param.inp using a dictionary."""
         filename = self.pathto('param.inp')
         update_params( filename, paramdict )

@@ -13,13 +13,14 @@ class AURICManager( object ):
 
     def runbatch( self, timeout=10 ):
         """Execute batch file."""
-        ret = self.batch_command.run( timeout )
-        return ret
+        self.batch_command.run( timeout )
+        return "running onerun.sh"
 
     def customrun( self, commands, timeout=10 ):
         commands = map(Command, commands)
         for cmd in commands:
             cmd.run(timeout)
+        return "running {}".format(" ".join( [ c.cmd for c in commands ] ) )
 
     def retrieve( self, filename, 
         features=['O+e 832 A (initial)','O+e 833 A (initial)','O+e 834 A (initial)',
@@ -81,12 +82,12 @@ class Command(object):
             
       def run(self, timeout):
             def target():
-                  print 'Thread started'
-                  print( "".join( self.cmd ) )
-                  #   self.process = subprocess.Popen(self.cmd,stderr=subprocess.STDOUT, stdout=subprocess.PIPE)#, shell=True)
-                  self.process = subprocess.check_call( self.cmd )#, shell=True)
-                  #self.process.communicate()
-                  print 'Thread finished'
+                  #print 'Thread started'
+                  #print( " ".join( self.cmd ) )
+                  self.process = subprocess.Popen(self.cmd,stderr=subprocess.STDOUT, stdout=subprocess.PIPE)#, shell=True)
+                  #self.process = subprocess.check_call( self.cmd )#, shell=True)
+                  #out, err = self.process.communicate()
+                  #print 'Thread finished'
                   
             thread = threading.Thread( target=target )
             thread.start()

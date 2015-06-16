@@ -56,7 +56,7 @@ class AURICManager( object ):
         fpath = self.pathto( fname )
         if fname == "view.inp" or ftype == "view":
             h, za = options["ZOBS"], options["ZA"]
-            write_view( filename=fpath, h, za )
+            write_view( filename=fpath, h=h, za=za )
         elif fname == "radtrans.opt" or ftype == "radtrans":
             write_radtrans_options( filename=fpath, **kwargs )
         else:

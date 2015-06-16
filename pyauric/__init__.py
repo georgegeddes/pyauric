@@ -52,7 +52,7 @@ class AURICManager( object ):
         finally:
             return out
 
-    def write( self, fname, ftype=None, **kwargs ):
+    def write( self, fname, ftype=None, options={}, **kwargs ):
         fpath = self.pathto( fname )
         if fname == "view.inp" or ftype == "view":
             h, za = options["ZOBS"], options["ZA"]

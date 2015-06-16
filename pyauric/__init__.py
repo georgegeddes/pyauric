@@ -55,7 +55,8 @@ class AURICManager( object ):
     def write( self, fname, ftype=None, **kwargs ):
         fpath = self.pathto( fname )
         if fname == "view.inp" or ftype == "view":
-            write_view( filename=fpath, **kwargs )
+            h, za = options["ZOBS"], options["ZA"]
+            write_view( filename=fpath, h, za )
         elif fname == "radtrans.opt" or ftype == "radtrans":
             write_radtrans_options( filename=fpath, **kwargs )
         else:
@@ -231,7 +232,7 @@ def write_params( filename, parsed_lines ):
         for line in lines:
             f.write(line)
 
-param_format = r"""Mandatory parameters:
+_param_format = r"""Mandatory parameters:
         NALT =        100 : number of altitude points
          ZUB =    1000.00 : upper bound of atmosphere (km)
        YYDDD =      92080 : year & day (YYDDD format)
@@ -257,7 +258,7 @@ Derived parameters:
       F10PRE =      76.80 : F10.7 (previous day)
       F10AVE =      79.40 : F10.7 (81-day average)
        AP(1) =       9.00 : daily Ap
-       AP(2) =      -1.00 : 3-hour Ap
+       AP(2) =      -1.00 : 3-hour Ap #
        AP(3) =      -1.00 : 3-hour Ap
        AP(4) =      -1.00 : 3-hour Ap
        AP(5) =      -1.00 : 3-hour Ap

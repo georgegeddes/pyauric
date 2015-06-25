@@ -1,5 +1,6 @@
 import os, subprocess, threading, re, traceback
 import numpy as np
+from .reader import auric_file_reader
 
 class AURICManager( object ):
     """Keep track of the directory where you want to run AURIC."""
@@ -9,6 +10,7 @@ class AURICManager( object ):
         self.path = os.path.abspath( path )
         self.batchfile = os.path.join( path, "onerun.sh" )
         self.batch_command = Command( ["bash", self.batchfile] )
+        self._reader = auric_file_reader()
         #^ add some logic to see if auric needs to be setup
 
     def runbatch( self, timeout=10 ):
@@ -71,6 +73,11 @@ class AURICManager( object ):
         filename = self.pathto('param.inp')
         update_params( filename, paramdict )
         return paramdict
+
+    def load(self, filename,**kwargs):
+        """Load data from `filename`. Default behavior returns a pandas data frame. Pass returnDataFrame=False to get a dictionary instead."""
+        df = self._reader.read(os.path.join(self.path,filename),**kwargs)
+        return df
 
     @property
     def params( self ):

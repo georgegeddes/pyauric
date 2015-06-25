@@ -78,7 +78,7 @@ class auric_file_reader( object ):
             df = pd.DataFrame(data,index=idx)
             df.ylabel = name
             df.filename = filename
-            df.title = "Data from %s".format(filename.split('/')[-1])
+            df.title = "Data from {}".format(filename.split('/')[-1])
             df.extra_info = info
             return df
         else:

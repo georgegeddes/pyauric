@@ -46,9 +46,9 @@ class AURICManager( object ):
                 out = read_radtrans_options( fpath )
             else:
                 out = read_auric_file( fpath )
-        except Exception, err:
+        except Exception as err:
             traceback.print_exc()
-            print "pyauric doesn't recognize this type of file."
+            print("pyauric doesn't recognize this type of file.")
         finally:
             return out
 
@@ -95,10 +95,10 @@ class Command(object):
             
             thread.join(timeout)
             if thread.is_alive():
-                  print 'Terminating process'
+                  print('Terminating process')
                   self.process.terminate()
                   thread.join()
-                  print self.process.returncode        
+                  print(self.process.returncode)
 
 def read_auric_file( filename ):
     """Reads a file from AURIC and returns a dictionary of the file's contents.

@@ -4,3 +4,5 @@
 *~
 *.pyc
 pyauric.egg-info/*
+build/*
+dist/*

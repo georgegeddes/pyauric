@@ -1,5 +1,6 @@
 import os, subprocess, threading, re, traceback
 import numpy as np
+from .reader import auric_file_reader
 
 class AURICManager( object ):
     """Keep track of the directory where you want to run AURIC."""
@@ -9,6 +10,7 @@ class AURICManager( object ):
         self.path = os.path.abspath( path )
         self.batchfile = os.path.join( path, "onerun.sh" )
         self.batch_command = Command( ["bash", self.batchfile] )
+        self._reader = auric_file_reader()
         #^ add some logic to see if auric needs to be setup
 
     def runbatch( self, timeout=10 ):
@@ -52,10 +54,11 @@ class AURICManager( object ):
         finally:
             return out
 
-    def write( self, fname, ftype=None, **kwargs ):
+    def write( self, fname, ftype=None, options={}, **kwargs ):
         fpath = self.pathto( fname )
         if fname == "view.inp" or ftype == "view":
-            write_view( filename=fpath, **kwargs )
+            h, za = options["ZOBS"], options["ZA"]
+            write_view( filename=fpath, h=h, za=za )
         elif fname == "radtrans.opt" or ftype == "radtrans":
             write_radtrans_options( filename=fpath, **kwargs )
         else:
@@ -70,6 +73,11 @@ class AURICManager( object ):
         filename = self.pathto('param.inp')
         update_params( filename, paramdict )
         return paramdict
+
+    def load(self, filename,**kwargs):
+        """Load data from `filename`. Default behavior returns a pandas data frame. Pass returnDataFrame=False to get a dictionary instead."""
+        df = self._reader.read(os.path.join(self.path,filename),**kwargs)
+        return df
 
     @property
     def params( self ):
@@ -231,7 +239,7 @@ def write_params( filename, parsed_lines ):
         for line in lines:
             f.write(line)
 
-param_format = r"""Mandatory parameters:
+_param_format = r"""Mandatory parameters:
         NALT =        100 : number of altitude points
          ZUB =    1000.00 : upper bound of atmosphere (km)
        YYDDD =      92080 : year & day (YYDDD format)
@@ -257,7 +265,7 @@ Derived parameters:
       F10PRE =      76.80 : F10.7 (previous day)
       F10AVE =      79.40 : F10.7 (81-day average)
        AP(1) =       9.00 : daily Ap
-       AP(2) =      -1.00 : 3-hour Ap
+       AP(2) =      -1.00 : 3-hour Ap #
        AP(3) =      -1.00 : 3-hour Ap
        AP(4) =      -1.00 : 3-hour Ap
        AP(5) =      -1.00 : 3-hour Ap

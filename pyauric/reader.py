@@ -1,7 +1,13 @@
 import fortranformat as ff 
-import numpy as np 
-import pandas as pd
+import numpy as np
+try:
+    import pandas as pd
+except ImportError as err:
+    _has_pandas=False
+else:
+    _has_pandas=True
 
+    
 class _dummy_reader( object ):
     def __init__(self):
         pass
@@ -73,7 +79,7 @@ class auric_file_reader( object ):
                 data_array =  np.hstack( data_list[::-1] )
                 index[header] = data_array
 
-        if returnDataFrame:
+        if returnDataFrame and _has_pandas:
             idx = pd.Index(index.values()[0],name=index.keys()[0])
             df = pd.DataFrame(data,index=idx)
             df.ylabel = name

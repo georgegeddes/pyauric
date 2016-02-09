@@ -2,10 +2,13 @@ import os, subprocess, threading, re, traceback
 import numpy as np
 from .reader import auric_file_reader
 
+_AURIC_ROOT = os.getenv("AURIC_ROOT")
+if _AURIC_ROOT is None:
+    _AURIC_ROOT=os.getenv("HOME")+"/auric"
+
 class AURICManager( object ):
     """Keep track of the directory where you want to run AURIC."""
-    auricroot = str(os.getenv("AURIC_ROOT"))
-    def __init__( self, path=auricroot ):
+    def __init__( self, path=_AURIC_ROOT ):
         assert os.path.isdir(path), "Invalid AURIC path, '{}'".format( path )
         self.path = os.path.abspath( path )
         self.batchfile = os.path.join( path, "onerun.sh" )

@@ -80,7 +80,7 @@ class auric_file_reader( object ):
                 index[header] = data_array
 
         if returnDataFrame and _has_pandas:
-            idx = pd.Index(index.values()[0],name=index.keys()[0])
+            idx = pd.Index(list(index.values())[0],name=list(index.keys())[0])
             df = pd.DataFrame(data,index=idx)
             df.ylabel = name
             df.filename = filename

@@ -79,15 +79,23 @@ class auric_file_reader( object ):
                 data_array =  np.hstack( data_list[::-1] )
                 index[header] = data_array
 
+        title = "Data from {}".format(filename.split('/')[-1])
         if returnDataFrame and _has_pandas:
             idx = pd.Index(list(index.values())[0],name=list(index.keys())[0])
             df = pd.DataFrame(data,index=idx)
             df.ylabel = name
             df.filename = filename
-            df.title = "Data from {}".format(filename.split('/')[-1])
+            df.title = title
             df.extra_info = info
             return df
         else:
-            return { 'info':info, 'index':index, 'data':data }
+            out = { 'info':info
+                    , 'index':index
+                    , 'data':data
+                    , 'ylabel':name
+                    , 'filename':filename
+                    , 'title':title
+            }
+            return out
 
 

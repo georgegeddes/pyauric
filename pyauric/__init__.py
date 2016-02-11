@@ -1,20 +1,29 @@
-import os, subprocess, threading, re, traceback
+import os, re, traceback
 import numpy as np
 from .reader import auric_file_reader
+from .command import Command
 
 _AURIC_ROOT = os.getenv("AURIC_ROOT")
 if _AURIC_ROOT is None:
-    _AURIC_ROOT=os.getenv("HOME")+"/auric"
-
+    _AURIC_ROOT=os.path.join(os.getenv("HOME"),"auric")
+_AURIC_BIN_DIR=os.path.join(_AURIC_ROOT,"bin",os.uname().sysname)
+                            
 class AURICManager( object ):
     """Keep track of the directory where you want to run AURIC."""
     def __init__( self, path=_AURIC_ROOT ):
         assert os.path.isdir(path), "Invalid AURIC path, '{}'".format( path )
         self.path = os.path.abspath( path )
+        self.env = { "AURIC_ROOT":_AURIC_ROOT
+                     , "PATH":":".join([_AURIC_BIN_DIR
+                                        , os.getenv("PATH")])
+        }
         self.batchfile = os.path.join( path, "onerun.sh" )
-        self.batch_command = Command( ["bash", self.batchfile] )
+        self.batch_command = self.new_command( ["bash", self.batchfile] )
         self._reader = auric_file_reader()
         #^ add some logic to see if auric needs to be setup
+
+    def new_command(self,cmd):
+        return Command(cmd,env=self.env,cwd=self.path)
 
     def runbatch( self, timeout=10 ):
         """Execute batch file."""
@@ -22,9 +31,8 @@ class AURICManager( object ):
         return "running onerun.sh"
 
     def customrun( self, commands, timeout=10 ):
-        commands = map(Command, commands)
+        commands = map(self.new_command, commands)
         for cmd in commands:
-            cmd.cmd=os.path.join( self.auricroot, "bin",os.uname()[0],cmd.cmd)
             cmd.run(timeout)
         return "running {}".format(" ".join( [ c.cmd for c in commands ] ) )
 
@@ -85,31 +93,6 @@ class AURICManager( object ):
     @property
     def params( self ):
         return parse_params( self.pathto( 'param.inp' ) )
-
-class Command(object):
-      #http://stackoverflow.com/questions/1191374/subprocess-with-timeout?lq=1
-      def __init__(self, cmd):
-            self.cmd  = cmd
-            self.process = None
-            
-      def run(self, timeout):
-            def target():
-                  #print 'Thread started'
-                  #print( " ".join( self.cmd ) )
-                  self.process = subprocess.Popen(self.cmd,stderr=subprocess.STDOUT, stdout=subprocess.PIPE)#, shell=True)
-                  #self.process = subprocess.check_call( self.cmd )#, shell=True)
-                  #out, err = self.process.communicate()
-                  #print 'Thread finished'
-                  
-            thread = threading.Thread( target=target )
-            thread.start()
-            
-            thread.join(timeout)
-            if thread.is_alive():
-                  print('Terminating process')
-                  self.process.terminate()
-                  thread.join()
-                  print(self.process.returncode)
 
 def read_auric_file( filename ):
     """Reads a file from AURIC and returns a dictionary of the file's contents.

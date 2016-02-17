@@ -2,15 +2,55 @@ import os, re, traceback
 import numpy as np
 from .reader import auric_file_reader
 from .command import Command
+from .switch import Switch
+from .batch import assemble_batch_run
+from .bands import _bands
 
 _AURIC_ROOT = os.getenv("AURIC_ROOT")
 if _AURIC_ROOT is None:
     _AURIC_ROOT=os.path.join(os.getenv("HOME"),"auric")
 _AURIC_BIN_DIR=os.path.join(_AURIC_ROOT,"bin",os.uname().sysname)
+
+_band_options_default = { k:False for k in _bands }
                             
 class AURICManager( object ):
-    """Keep track of the directory where you want to run AURIC."""
-    def __init__( self, path=_AURIC_ROOT ):
+    """Keep track of the directory where you want to run AURIC.
+    
+    The band options may be passed as a dictionary or as keywords.
+    Keyword settings will override the same settings passed in a dictionary.
+
+    Parameters
+    ----------
+    path: [ $AURIC_ROOT | string ]
+        Directory to use as the auric root
+
+    band_options: dictionary
+        Dictionary of synthetic spectrum options. Default is all False
+    use_eflux: bool, optional
+        Whether to use eflux vs peflux
+    n2_lbh: bool, optional
+        N2 Lyman-Birge-Hopfield (LBH)
+    n2_vk: bool, optional
+        N2 Vegard Kaplan (VK)
+    n2_1pg: bool, optional
+        N2 First Positive (1PG)
+    n2_2pg: bool, optional
+        N2 2nd Positive (2PG)
+    n2p_1ng: bool, optional
+        N2+ 1st Negative (1NG)
+    n2p_mnl: bool, optional
+        N2+ Meinel
+    no_bands: bool, optional
+        NO Bands (Gamma, Delta, Epsilon)
+
+    Attributes
+    ----------
+    TODO
+    """
+    def __init__( self, path=_AURIC_ROOT
+                  , band_options=_band_options_default
+                  , use_eflux = False
+                  , **band_kwds):
         assert os.path.isdir(path), "Invalid AURIC path, '{}'".format( path )
         self.path = os.path.abspath( path )
         self.env = { "AURIC_ROOT":_AURIC_ROOT
@@ -20,15 +60,20 @@ class AURICManager( object ):
         self.batchfile = os.path.join( path, "onerun.sh" )
         self.batch_command = self.new_command( ["bash", self.batchfile] )
         self._reader = auric_file_reader()
-        #^ add some logic to see if auric needs to be setup
+        self.band_options = band_options
+        self.use_eflux = use_eflux
+        for k,v in band_kwds.items():
+            self.band_options[k] = v
 
     def new_command(self,cmd):
         return Command(cmd,env=self.env,cwd=self.path)
 
     def runbatch( self, timeout=10 ):
         """Execute batch file."""
-        self.batch_command.run( timeout )
-        return "running onerun.sh"
+        #self.batch_command.run( timeout )
+        for cmd in self.batch:
+            cmd.run()
+        #return "running onerun.sh"
 
     def customrun( self, commands, timeout=10 ):
         commands = map(self.new_command, commands)
@@ -90,9 +135,26 @@ class AURICManager( object ):
         df = self._reader.read(os.path.join(self.path,filename),**kwargs)
         return df
 
+    def exists(self,fname):
+        return os.path.isfile(self.pathto(fname))
+    
+    @property
+    def radtrans_options( self ):
+        return self.read('radtrans.opt')
+    
+    @property
+    def view( self ):
+        return self.read( 'view.inp' )
+    
     @property
     def params( self ):
-        return parse_params( self.pathto( 'param.inp' ) )
+        p = [x for x in parse_params( self.pathto( 'param.inp' ) ) if len(x)>1]
+        return {x[0]:x[1] for x in p}
+        #return parse_params( self.pathto( 'param.inp' ) )
+
+    @property
+    def batch(self):
+        return list(assemble_batch_run(self))
 
 def read_auric_file( filename ):
     """Reads a file from AURIC and returns a dictionary of the file's contents.
@@ -161,7 +223,7 @@ def read_radtrans_options(filename='radtrans.opt'):
     for line in lines:
         m = re.search("([0-9]{3,4}) *\= (ON|OFF)",line) # match a 3-4 digit number followed by ' = ON' or ' = OFF'
         if m:
-            options[m.group(1)]=m.group(2)
+            options[m.group(1)]=Switch(m.group(2))
     return options
 
 def write_radtrans_options( filename='radtrans.opt', options={} ):
@@ -169,12 +231,12 @@ def write_radtrans_options( filename='radtrans.opt', options={} ):
     keylist=['832', '833', '834', '1304', '1356', '1040', '1026', '989', '1048', '1066', '1135', '1199']
     for key in keylist:
         if key not in options.keys():
-            options[key] = "OFF" #set any missing keys to OFF
+            options[key] = Switch("OFF") #set any missing keys to OFF
     with open(filename,'w') as f:
         f.write("Options for code RADTRANS:\n")
         f.write("-------------------------------------------------------\n")
         for key in keylist:
-            s=" "*9+"{:4s} = {}\n".format(key,options[key])
+            s=" "*9+"{:4s} = {}\n".format(key,Switch(options[key]))
             f.write(s)
         f.write("-------------------------------------------------------\n")
 
@@ -191,7 +253,7 @@ def parse_params( filename ):
     parsed_lines=[]
     for i, line in enumerate(lines):
         if re.search(":$",line): 
-            parsed_lines.append(line) 
+            parsed_lines.append([line]) 
             continue
         x = re.search('.*(?==)',line)                         # Everything before =
         y = re.search('(?<==)*[0-9 -]*?\.*[0-9 ]*(?=:)',line) # Number between = and :
@@ -225,6 +287,7 @@ def write_params( filename, parsed_lines ):
         for line in lines:
             f.write(line)
 
+                  
 _param_format = r"""Mandatory parameters:
         NALT =        100 : number of altitude points
          ZUB =    1000.00 : upper bound of atmosphere (km)
@@ -258,7 +321,4 @@ Derived parameters:
        AP(6) =      -1.00 : average 3-hour Ap
        AP(7) =      -1.00 : average 3-hour Ap
 """
-
-
-
 

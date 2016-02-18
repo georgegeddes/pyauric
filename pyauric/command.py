@@ -26,6 +26,26 @@ class Command:
         code = p.wait()
         return code
 
+class InputCommand(Command):
+    def run(self,input_string=b'',timeout=None):
+        """Run the command, optionally sending a string to stidn.
+        
+        Parameters
+        ----------
+        input_string: bytes
+            input to communicate to stdin. Can include newlines.
+
+        Returns
+        -------
+        code: int
+            return code of the command
+        """
+        p = sp.Popen(self.cmd,env=self.env,cwd=self.cwd,stdin=sp.PIPE)
+        if input_string:
+            p.communicate(input_string)
+        code = p.wait()
+        return code
+    
 if __name__=="__main__":
     import os
     cmd = Command(["auric"]

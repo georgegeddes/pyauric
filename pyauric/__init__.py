@@ -1,7 +1,7 @@
 import os, re, traceback
 import numpy as np
 from .reader import auric_file_reader
-from .command import Command
+from .command import Command, InputCommand
 from .switch import Switch
 from .batch import assemble_batch_run
 from .bands import _bands
@@ -66,6 +66,7 @@ class AURICManager( object ):
             self.band_options[k] = v
 
     def new_command(self,cmd):
+        """Create a process for an auric command with the proper environment."""
         return Command(cmd,env=self.env,cwd=self.path)
 
     def runbatch( self, timeout=10 ):
@@ -81,6 +82,24 @@ class AURICManager( object ):
             cmd.run(timeout)
         return "running {}".format(" ".join( [ c.cmd for c in commands ] ) )
 
+    def run_geoparm(self,compute_F107_and_Ap):
+        """The command `geoparm` derives the geomagnetic coordinates, solar zenith angle, and solar local time from the mandatory parameters. It requires user input to specify whether F10.7 and Ap should be computed or left alone.
+
+        Parameters
+        ----------
+        compute_F107_and_Ap: bool
+            Whether to compute F10.7 and Ap index.
+        
+        Returns
+        -------
+        out: int
+            return code of geoparm
+        """
+        input_string = b'Y\n' if compute_F107_and_Ap else b'N\n'
+        geoparm = InputCommand(cmd='geoparm',env=self.env,cwd=self.path)
+        out = geoparm.run(input_string)
+        return out
+    
     def retrieve( self, filename, 
         features=['O+e 832 A (initial)','O+e 833 A (initial)','O+e 834 A (initial)',
         'O+hv 832 A (initial)','O+hv 833 A (initial)','O+hv 834 A (initial)'] ):

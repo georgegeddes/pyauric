@@ -1,4 +1,4 @@
-from .batch import band_command
+from .bands import band_command
 
 def assemble_batch_run(auric):
     """Yield the sequence of AURIC commands in a batch run.

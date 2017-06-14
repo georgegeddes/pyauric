@@ -135,7 +135,7 @@ class AURICManager( object ):
             h, za = options["ZOBS"], options["ZA"]
             write_view( filename=fpath, h=h, za=za )
         elif fname == "radtrans.opt" or ftype == "radtrans":
-            write_radtrans_options( filename=fpath, **kwargs )
+            write_radtrans_options( filename=fpath, options=options, **kwargs )
         else:
             raise Exception("pyauric doesn't know how to write that kind of file yet.")
 

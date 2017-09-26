@@ -5,6 +5,7 @@ from .command import Command, InputCommand
 from .switch import Switch
 from .batch import assemble_batch_run
 from .bands import _bands
+from collections import OrderedDict
 
 _AURIC_ROOT = os.getenv("AURIC_ROOT")
 if _AURIC_ROOT is None:
@@ -182,16 +183,16 @@ def read_auric_file( filename ):
     with open(filename,'r') as f:
         lines=f.readlines()
     heading = None
-    out = {}
-    out["ZA"]=[]
-    out["ALT"]=[]
-    out["profiles"]={}
-    pattern="This probably won't match anything, right?"
+    out = OrderedDict()
+    out["ZA"] = []
+    out["ALT"] = []
+    out["profiles"] = OrderedDict()
+    pattern = "This probably won't match anything, right?"
     data = []
     # headings are not consistent across all auric files T.T
-    if re.search("observer altitude \(km\)",lines[0]):
-        out['ZOBS'] = re.search(".[0-9]+\.[0-9]+",lines[0]).group(0)
-        heading="Zenith Angles (deg)"
+    if re.search("observer altitude \(km\)", lines[0]):
+        out['ZOBS'] = re.search(".[0-9]+\.[0-9]+", lines[0]).group(0)
+        heading = "Zenith Angles (deg)"
     for i, line in enumerate(lines[1:]): # skip the first line, because it just describes the size of the data.
         if re.search("\A[^ ]",line):
             heading = re.search("[^\=]*",line).group(0).strip() # match all non-equals signs

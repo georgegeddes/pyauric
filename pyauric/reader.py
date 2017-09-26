@@ -6,8 +6,9 @@ except ImportError as err:
     _has_pandas=False
 else:
     _has_pandas=True
+from collections import OrderedDict
 
-    
+
 class _dummy_reader( object ):
     def __init__(self):
         pass
@@ -35,7 +36,7 @@ class auric_file_reader( object ):
         # store all the lines in info
         info = [line.strip('\n') for line in lines]
 
-        data = {}
+        data = OrderedDict()
         data_list = []
         index_mode = False
         name = ""
@@ -61,7 +62,7 @@ class auric_file_reader( object ):
                 data[header] = data_array
                 data_list = []
 
-        index = {}
+        index = OrderedDict()
         header = ''
         data_list = []
         while not header:

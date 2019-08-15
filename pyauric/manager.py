@@ -48,15 +48,15 @@ class AURICManager( object ):
     ----------
     TODO
     """
-    def __init__( self, path=_AURIC_ROOT
-                  , band_options=_band_options_default
-                  , use_eflux = False
-                  , **band_kwds):
+    def __init__( self, path=_AURIC_ROOT,
+                  band_options=_band_options_default,
+                  use_eflux = False,
+                  **band_kwds):
         assert os.path.isdir(path), "Invalid AURIC path, '{}'".format( path )
         self.path = os.path.abspath( path )
-        self.env = { "AURIC_ROOT":_AURIC_ROOT
-                     , "PATH":":".join([_AURIC_BIN_DIR
-                                        , os.getenv("PATH")])
+        self.env = { "AURIC_ROOT":_AURIC_ROOT,
+                     "PATH":":".join([_AURIC_BIN_DIR,
+                                        os.getenv("PATH")])
         }
         self.batchfile = os.path.join( path, "onerun.sh" )
         self.batch_command = self.new_command( ["bash", self.batchfile] )
@@ -189,33 +189,34 @@ def read_auric_file( filename ):
     out["ZA"] = []
     out["ALT"] = []
     out["profiles"] = OrderedDict()
-    pattern = "This probably won't match anything, right?"
+    # https://stackoverflow.com/questions/940822/regular-expression-syntax-for-match-nothing
+    pattern = r"(?!)"           # Matches nothing (not even the empty string)
     data = []
     # headings are not consistent across all auric files T.T
-    if re.search("observer altitude \(km\)", lines[0]):
-        out['ZOBS'] = re.search(".[0-9]+\.[0-9]+", lines[0]).group(0)
+    if re.search(r"observer altitude \(km\)", lines[0]):
+        out['ZOBS'] = re.search(r".[0-9]+\.[0-9]+", lines[0]).group(0)
         heading = "Zenith Angles (deg)"
     for i, line in enumerate(lines[1:]): # skip the first line, because it just describes the size of the data.
-        if re.search("\A[^ ]",line):
-            heading = re.search("[^\=]*",line).group(0).strip() # match all non-equals signs
+        if re.search(r"\A[^ ]",line):
+            heading = re.search(r"[^\=]*",line).group(0).strip() # match all non-equals signs
         if "ZOBS" == heading:
-            m = re.search("(?<=ZOBS \= )[0-9]{3}\.[0-9]{3}",line) # match ###.### after 'ZOBS = '
+            m = re.search(r"(?<=ZOBS \= )[0-9]{3}\.[0-9]{3}",line) # match ###.### after 'ZOBS = '
             if m: 
                 out['ZOBS']=float(m.group(0))
                 continue
         elif "Zenith Angles (deg)" in heading:
-            pattern = "([ ]*[0-9]*\.[0-9]*[ ]*)*" # match decimal numbers separated by whitespace
+            pattern = r"([ ]*[0-9]*\.[0-9]*[ ]*)*" # match decimal numbers separated by whitespace
             data = out["ZA"]
         elif "Altitudes (km)" in heading:
-            pattern = "([ ]*[0-9]*\.[0-9]*[ ]*)*" # match decimal numbers separated by whitespace
+            pattern = r"([ ]*[0-9]*\.[0-9]*[ ]*)*" # match decimal numbers separated by whitespace
             data = out["ALT"]
-        elif re.search("\A[A-Z][a-z][a-z]+",heading):
+        elif re.search(r"\A[A-Z][a-z][a-z]+",heading):
             out['type'] = heading
-        elif re.search("\A[0-9]{3,4} A|\A[A-Z.*[0-9].*|\A\[",heading): # match a wavelength, transition name, or initial bracket
+        elif re.search(r"\A[0-9]{3,4} A|\A[A-Z.*[0-9].*|\A\[",heading): # match a wavelength, transition name, or initial bracket
             if heading not in out["profiles"]: 
                 out["profiles"][heading] = []
                 continue
-            pattern = "([ ]*[0-9]\.[0-9]{3}E(\+|-)[0-9]{2}[ ]*)*" # match floats in sci. notation
+            pattern = r"([ ]*[0-9]\.[0-9]{3}E(\+|-)[0-9]{2}[ ]*)*" # match floats in sci. notation
             data = out["profiles"][heading]
  
         m = re.search(pattern,line)
@@ -243,7 +244,7 @@ def read_radtrans_options(filename='radtrans.opt'):
         lines = f.readlines()
     options={}
     for line in lines:
-        m = re.search("([0-9]{3,4}) *\= (ON|OFF)",line) # match a 3-4 digit number followed by ' = ON' or ' = OFF'
+        m = re.search(r"([0-9]{3,4}) *\= (ON|OFF)",line) # match a 3-4 digit number followed by ' = ON' or ' = OFF'
         if m:
             options[m.group(1)]=Switch(m.group(2))
     return options
@@ -274,12 +275,12 @@ def parse_params( filename ):
         lines=f.readlines()        
     parsed_lines=[]
     for i, line in enumerate(lines):
-        if re.search(":$",line): 
+        if re.search(r":$",line): 
             parsed_lines.append(line) 
             continue
-        x = re.search('.*(?==)',line)                         # Everything before =
-        y = re.search('(?<==)*[0-9 -]*?\.*[0-9 ]*(?=:)',line) # Number between = and :
-        z = re.search('(?<=:).*',line)                        # Anything after :
+        x = re.search(r'.*(?==)',line)                         # Everything before =
+        y = re.search(r'(?<==)*[0-9 -]*?\.*[0-9 ]*(?=:)',line) # Number between = and :
+        z = re.search(r'(?<=:).*',line)                        # Anything after :
         key = x.group(0).strip()
         value = float( y.group(0).strip() )
         desc = z.group(0).strip()

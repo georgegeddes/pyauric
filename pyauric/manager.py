@@ -1,4 +1,4 @@
-import os, re, traceback
+import os, re, traceback, shutil
 import numpy as np
 from .reader import auric_file_reader
 from .command import Command, InputCommand
@@ -159,6 +159,28 @@ class AURICManager( object ):
 
     def exists(self,fname):
         return os.path.isfile(self.pathto(fname))
+
+    def clone(self, newpath, *args, **kwargs):
+        '''Make a copy of this auric manager in a new directory. This copies
+        .inp and .opt files. The new directory is created if necessary.
+        '''
+        if not os.path.exists(newpath):
+            os.mkdir(newpath)
+
+        # dbpath.inp, param.inp, view.inp should always be present
+        for file in ["dbpath.inp", "param.inp", "view.inp"]:
+            shutil.copy(self.pathto(file), os.path.join(newpath))
+
+        # The .opt files may not be present
+        for file in ["ly_alpha.opt", "ly_beta.opt", "radtrans.opt"]:
+            try:
+                shutil.copy(self.pathto(file), os.path.join(newpath))
+            except FileNotFoundError:
+                pass
+                
+
+        # Return a new instance
+        return self.__class__(newpath, *args, **kwargs)
     
     @property
     def radtrans_options( self ):

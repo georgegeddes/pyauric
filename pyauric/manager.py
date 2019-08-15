@@ -5,7 +5,7 @@ from .command import Command, InputCommand
 from .switch import Switch
 from .batch import assemble_batch_run
 from .bands import _bands
-from collections import OrderedDict
+from collections import OrderedDict, ChainMap
 
 _AURIC_ROOT = os.getenv("AURIC_ROOT")
 if _AURIC_ROOT is None:
@@ -133,7 +133,9 @@ class AURICManager( object ):
     def write( self, fname, ftype=None, options={}, **kwargs ):
         fpath = self.pathto( fname )
         if fname == "view.inp" or ftype == "view":
-            h, za = options["ZOBS"], options["ZA"]
+            h, za = self.view
+            viewdict = ChainMap(options, {'ZOBS': h, 'ZA': za})
+            h, za = viewdict["ZOBS"], viewdict["ZA"]
             write_view( filename=fpath, h=h, za=za )
         elif fname == "radtrans.opt" or ftype == "radtrans":
             write_radtrans_options( filename=fpath, options=options, **kwargs )

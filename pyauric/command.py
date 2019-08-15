@@ -22,8 +22,10 @@ class Command:
     def run(self, timeout=None):
         """Run the command.
         timeout is accepted for compatibility with the old version."""
-        p = sp.Popen(self.cmd,env=self.env,cwd=self.cwd)
-        code = p.wait()
+        p = sp.Popen(self.cmd,env=self.env,cwd=self.cwd, stdout=sp.PIPE, stderr=sp.PIPE)
+        code = p.wait(timeout)
+        print(p.stdout.read().decode('utf-8'))
+        print(p.stderr.read().decode('utf-8'))
         return code
 
 class InputCommand(Command):

@@ -87,7 +87,7 @@ class auric_file_reader( object ):
             df.ylabel = name
             df.filename = filename
             df.title = title
-            df.extra_info = info
+            # df.extra_info = info
             return df
         else:
             out = { 'info':info

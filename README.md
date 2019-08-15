@@ -10,16 +10,25 @@ or, even better, use the `develop` option to stay up-to-date with changes withou
     cd pyauric
     python setup.py develop
 
+There is a basic test to check that the environment makes sense. Run it with
+
+	python setup.py test
+
 ### What is this repository for? ###
 
-* Interface with the AURIC model without using the icky fortran menu
+* Interface with the AURIC model from python
 * Change `param.inp` or `radtrans.opt` from a dictionary
-* Read AURIC output into numpy arrays
+* Read AURIC output into pandas DataFrames
 * maybe other neat things in the future!
 
 ### Dependencies ###
 
-* standard python stuff
+* python 3.3 or later
+* fortranformat
+* numpy
+* pandas
+* matplotlib (optional)
+
 
 ### Contribution guidelines ###
 
